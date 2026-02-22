@@ -19,38 +19,35 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Install Gradle
+    - name: Fix Gradle Wrapper
       run: |
-        wget https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
-        unzip gradle-8.11.1-bin.zip
-        sudo mv gradle-8.11.1 /opt/gradle
-        export PATH=$PATH:/opt/gradle/bin
-        gradle --version
-
-    - name: Setup Gradle Wrapper JAR
-      run: |
-        export PATH=$PATH:/opt/gradle/bin
         mkdir -p gradle/wrapper
-        gradle wrapper --gradle-version 8.11.1
+        curl -fL "https://services.gradle.org/distributions/gradle-8.11.1-bin.zip" -o gradle.zip
+        unzip -o gradle.zip
+        cp gradle-8.11.1/lib/plugins/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar
         ls -la gradle/wrapper/
 
     - name: Grant Gradle Permission
-      run: chmod +x gradlew
+      run: |
+        chmod +x gradlew
+        ls -la gradlew
+
+    - name: Verify Wrapper Setup
+      run: |
+        echo "=== Wrapper JAR ==="
+        ls -la gradle/wrapper/
+        echo "=== Wrapper Properties ==="
+        cat gradle/wrapper/gradle-wrapper.properties
+        echo "=== Gradlew file ==="
+        head -5 gradlew
 
     - name: Create Missing Binary Directory
       run: |
         mkdir -p app/src/main/assets/xlarig/armeabi-v7a
         touch app/src/main/assets/xlarig/armeabi-v7a/xlarig.v1
 
-    - name: Verify Wrapper Files
-      run: |
-        ls -la gradle/wrapper/
-        cat gradle/wrapper/gradle-wrapper.properties
-
     - name: Build Debug APK
-      run: |
-        export PATH=$PATH:/opt/gradle/bin
-        ./gradlew assembleDebug --stacktrace
+      run: ./gradlew assembleDebug --stacktrace --info
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
