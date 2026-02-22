@@ -19,14 +19,20 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Download Gradle Wrapper JAR
+    - name: Install Gradle
       run: |
-        mkdir -p gradle/wrapper
-        curl -Lo gradle/wrapper/gradle-wrapper.jar \
-        "https://raw.githubusercontent.com/gradle/gradle/v8.11.1/gradle/wrapper/gradle-wrapper.jar"
+        wget https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
+        unzip gradle-8.11.1-bin.zip
+        sudo mv gradle-8.11.1 /opt/gradle
+        export PATH=$PATH:/opt/gradle/bin
+        gradle --version
 
-    - name: Verify Gradle Wrapper Properties
-      run: cat gradle/wrapper/gradle-wrapper.properties
+    - name: Setup Gradle Wrapper JAR
+      run: |
+        export PATH=$PATH:/opt/gradle/bin
+        mkdir -p gradle/wrapper
+        gradle wrapper --gradle-version 8.11.1
+        ls -la gradle/wrapper/
 
     - name: Grant Gradle Permission
       run: chmod +x gradlew
@@ -36,8 +42,15 @@ jobs:
         mkdir -p app/src/main/assets/xlarig/armeabi-v7a
         touch app/src/main/assets/xlarig/armeabi-v7a/xlarig.v1
 
+    - name: Verify Wrapper Files
+      run: |
+        ls -la gradle/wrapper/
+        cat gradle/wrapper/gradle-wrapper.properties
+
     - name: Build Debug APK
-      run: ./gradlew assembleDebug --stacktrace
+      run: |
+        export PATH=$PATH:/opt/gradle/bin
+        ./gradlew assembleDebug --stacktrace
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
